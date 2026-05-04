@@ -1,0 +1,16 @@
+{
+  "name": "Vampire Survivors - Nightfall Survivors",
+  "revisionLabel": "Nightfall Survivors",
+  "description": "",
+  "mode": "Universal",
+  "exportDate": "2026-05-04T06:14:28.640Z",
+  "rosebudBuiltInSplash": {
+    "present": true,
+    "version": 1
+  },
+  "assetCount": 145,
+  "assetTypes": [
+    "image",
+    "audio"
+  ]
+}

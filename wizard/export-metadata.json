@@ -1,0 +1,15 @@
+{
+  "name": "Interactive Story - Wizard",
+  "revisionLabel": "Initial import",
+  "description": "",
+  "mode": "Universal",
+  "exportDate": "2026-05-04T06:16:19.624Z",
+  "rosebudBuiltInSplash": {
+    "present": true,
+    "version": 1
+  },
+  "assetCount": 4,
+  "assetTypes": [
+    "image"
+  ]
+}

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tavern Talk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=MedievalSharp&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "phaser": "https://esm.sh/phaser@3.70.0",
+          "tone": "https://esm.sh/tone@14.7.77"
+        }
+      }
+    </script>
+    <style>
+      html, body { 
+        margin: 0; 
+        padding: 0; 
+        background-color: black; 
+        overflow: hidden; 
+      }
+      
+      @keyframes endGamePop {
+        0% { transform: scale(0.5); opacity: 0; }
+        60% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      
+      #game-container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        position: relative;
+        flex-direction: column; /* Default to column for safety */
+      }
+      
+      #game-container canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      
+      #game-container .phaser-dom-container { pointer-events: none; }
+      #game-container .phaser-dom-container > * { pointer-events: auto; }
+      
+      /* --- BASE LAYOUT (Mobile/Safe/Vertical) --- */
+      /* This is the default layout. It works on all screen sizes. */
+      
+      #dialogue-ui {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 80vh; /* Allow it to take up most of screen if needed */
+        height: auto;
+        pointer-events: none;
+        z-index: 100;
+        transition: opacity 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      
+      #dialogue-box {
+        width: 100%;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.9) 100%);
+        border-top: 5px solid #8b4513;
+        padding: 12px;
+        box-sizing: border-box;
+        
+        /* Flex Column Layout */
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        
+        pointer-events: auto;
+        min-height: auto;
+        max-height: 70vh; /* Prevent covering whole screen */
+        
+        box-shadow: 
+          0 -4px 8px rgba(0, 0, 0, 0.6),
+          inset 0 1px 2px rgba(139, 69, 19, 0.4);
+      }
+      
+      /* 1. HUD (Integrated by default) */
+      #hud-overlay {
+        position: static; /* In flow */
+        width: 100%;
+        padding: 5px;
+        height: auto;
+        pointer-events: auto;
+        z-index: 50;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        box-sizing: border-box;
+        order: 1;
+      }
+      
+      #persuasion-container {
+        position: static;
+        width: 48%; /* Half width */
+        min-width: 140px;
+        flex: 1 1 auto;
+      }
+      
+      #persuasion-label {
+        font-family: 'MedievalSharp', cursive;
+        font-size: 12px;
+        color: #ffd700;
+        font-weight: bold;
+        margin-bottom: 2px;
+      }
+      
+      #persuasion-bar-bg {
+        width: 100%;
+        height: 18px;
+        background: rgba(0,0,0,0.8);
+        border: 2px solid #ffffff;
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      #persuasion-bar-fill {
+        height: 100%;
+        width: 50%;
+        background: linear-gradient(180deg, #ffff00 0%, #ffdd00 50%, #ffbb00 100%);
+        transition: width 0.5s ease;
+      }
+
+      #stats-container {
+        position: static;
+        width: 48%; /* Half width */
+        min-width: 140px;
+        flex: 1 1 auto;
+        background: none;
+        border: none;
+        padding: 0;
+        box-shadow: none;
+      }
+      
+      #stats-title { display: none; }
+      
+      #stats-list {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      
+      .stat-line {
+        font-family: 'MedievalSharp', cursive;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      #stat-strength { color: #ff4444; }
+      #stat-charm { color: #44ff44; }
+      #stat-intelligence { color: #4444ff; }
+      
+      /* 2. Speaker Name */
+      #speaker-name {
+        font-family: 'MedievalSharp', cursive;
+        font-size: 20px;
+        color: #ffd700;
+        font-weight: bold;
+        order: 2;
+        margin: 0;
+      }
+      
+      /* 3. Text Area */
+      #dialogue-text {
+        font-family: 'MedievalSharp', cursive;
+        font-size: 16px;
+        color: #ffffff;
+        line-height: 1.4;
+        
+        /* Scrollable Area */
+        overflow-y: auto;
+        padding: 8px;
+        padding-right: 12px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 6px;
+        border: 1px solid rgba(139, 69, 19, 0.3);
+        
+        /* Flex constraints */
+        order: 3;
+        flex: 1 1 auto; /* Grow to fill space */
+        min-height: 80px; /* Minimum visible height */
+        max-height: 200px; /* Cap it so buttons aren't pushed off */
+      }
+      
+      /* Custom Scrollbar */
+      #dialogue-text::-webkit-scrollbar { width: 6px; }
+      #dialogue-text::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+      #dialogue-text::-webkit-scrollbar-thumb { background: #8b4513; border-radius: 3px; }
+
+      /* 4. Options */
+      #dialogue-options {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        order: 4;
+        width: 100%;
+        flex-shrink: 0; /* Never shrink buttons */
+      }
+      
+      .dialogue-option {
+        background: linear-gradient(180deg, #3a3a3a 0%, #2d2d2d 50%, #1a1a1a 100%);
+        border: 2px solid #ffd700;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-family: 'MedievalSharp', cursive;
+        font-size: 14px;
+        color: #ffffff;
+        cursor: pointer;
+        text-align: left;
+        position: relative;
+        text-shadow: 1px 1px 2px black;
+      }
+      
+      .dialogue-option:hover { filter: brightness(1.2); transform: translateY(-1px); }
+      .dialogue-option.strength { border-color: #ff4444; }
+      .dialogue-option.charm { border-color: #44ff44; }
+      .dialogue-option.intelligence { border-color: #4444ff; }
+      
+      
+      /* --- DESKTOP / WIDESCREEN OVERRIDE --- */
+      /* Only activate this layout if we have plenty of space */
+      @media only screen and (min-width: 1025px) and (min-height: 720px) {
+        
+        #game-container {
+          flex-direction: row; /* Side by side if needed */
+        }
+        
+        /* Move HUD Floating Top Right */
+        #hud-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 100vh;
+          width: auto;
+          pointer-events: none;
+          background: none;
+          padding: 20px;
+          display: block; /* Reset flex */
+        }
+        
+        #persuasion-container {
+          position: absolute;
+          top: 20px;
+          left: 50px;
+          width: 300px;
+          flex: none;
+        }
+        
+        #persuasion-label { font-size: 24px; margin-bottom: 5px; }
+        #persuasion-bar-bg { height: 40px; border: 3px solid white; border-radius: 10px; }
+        
+        #stats-container {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          width: 230px;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.7) 100%);
+          border: 3px solid #ffd700;
+          border-radius: 10px;
+          padding: 15px;
+          display: block;
+        }
+        
+        #stats-title { display: block; font-size: 18px; color: #ffd700; text-align: center; margin-bottom: 10px; }
+        #stats-list { display: flex; flex-direction: column; gap: 10px; }
+        .stat-line { font-size: 20px; padding-left: 10px; }
+        
+        /* Horizontal Dialogue Layout */
+        #dialogue-box {
+          display: grid;
+          grid-template-columns: 1fr 35%;
+          grid-template-rows: auto 1fr;
+          gap: 0 30px;
+          padding: 20px 50px;
+          min-height: 30vh;
+          max-height: 40vh;
+        }
+        
+        #speaker-name {
+          grid-column: 1 / 2;
+          grid-row: 1;
+          font-size: 32px;
+          margin-bottom: 10px;
+        }
+        
+        #dialogue-text {
+          grid-column: 1 / 2;
+          grid-row: 2;
+          background: none;
+          border: none;
+          font-size: 26px;
+          max-height: 25vh;
+          padding: 0 10px 0 0;
+        }
+        
+        #dialogue-options {
+          grid-column: 2 / 3;
+          grid-row: 1 / 3;
+          align-self: center;
+          gap: 15px;
+        }
+        
+        .dialogue-option {
+          padding: 15px 20px;
+          font-size: 18px;
+          text-align: center;
+        }
+      }
+    </style>
+  
+<style>
+    #rosebud-exported-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        opacity: 1;
+        transition: opacity 500ms ease-in-out;
+    }
+
+    #rosebud-exported-splash.is-hiding {
+        opacity: 0;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        text-align: center;
+        color: #fff;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__logo {
+        width: 100px;
+        height: 100px;
+        animation: rosebud-exported-splash-breathe 2.4s ease-in-out infinite;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 16px;
+        line-height: 1.25;
+        letter-spacing: 0.06em;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__text strong {
+        font-weight: 700;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__text span:last-child {
+        opacity: 0.88;
+    }
+
+    @keyframes rosebud-exported-splash-breathe {
+        0%,
+        100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+</style></head>
+  <body>
+<div id="rosebud-exported-splash" aria-live="polite">
+    <div class="rosebud-exported-splash__content">
+        <img
+            class="rosebud-exported-splash__logo"
+            src="__rosebud/rosebud-icon.png"
+            alt="Rosebud Logo"
+            width="100"
+            height="100"
+        />
+        <div class="rosebud-exported-splash__text" aria-label="Rosebud.AI Make Games">
+            <strong>Rosebud.AI</strong>
+            <span>Make Games</span>
+        </div>
+    </div>
+</div>
+    <div id="game-container"></div>
+    
+    <!-- HUD Overlay (Desktop) / Inside dialogue box (Mobile) -->
+    <div id="hud-overlay">
+      <div id="persuasion-container">
+        <div id="persuasion-label">PERSUASION</div>
+        <div id="persuasion-bar-bg">
+          <div id="persuasion-bar-fill"></div>
+        </div>
+      </div>
+      
+      <div id="stats-container">
+        <div id="stats-title">ADVENTURER STATS</div>
+        <div id="stats-list">
+          <div class="stat-line" id="stat-strength">Strength: 10 (+0)</div>
+          <div class="stat-line" id="stat-charm">Charm: 10 (+0)</div>
+          <div class="stat-line" id="stat-intelligence">Intelligence: 10 (+0)</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Dialogue UI Overlay -->
+    <div id="dialogue-ui">
+      <div id="dialogue-box">
+        <div id="speaker-name">Grommash</div>
+        <div id="dialogue-text"></div>
+        <div id="dialogue-options"></div>
+      </div>
+    </div>
+    
+    <script>
+      // Sync logic for moving HUD (match CSS media query)
+      function repositionHUD() {
+        // MATCHES THE DESKTOP MEDIA QUERY
+        const isWideDesktop = window.matchMedia('(min-width: 1025px) and (min-height: 720px)').matches;
+        
+        const hudOverlay = document.getElementById('hud-overlay');
+        const dialogueBox = document.getElementById('dialogue-box');
+        
+        if (!isWideDesktop && hudOverlay.parentElement !== dialogueBox) {
+          // Move HUD INSIDE dialogue box (Compact Mode)
+          dialogueBox.insertBefore(hudOverlay, dialogueBox.firstChild);
+        } else if (isWideDesktop && hudOverlay.parentElement === dialogueBox) {
+          // Move HUD OUTSIDE to body (Wide Mode)
+          document.body.insertBefore(hudOverlay, document.getElementById('dialogue-ui'));
+        }
+      }
+      
+      // Run on load and resize
+      repositionHUD();
+      window.addEventListener('resize', repositionHUD);
+      window.addEventListener('orientationchange', () => setTimeout(repositionHUD, 100));
+    </script>
+    <script type="module" src="main.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/ChatManager.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/ProjectRedirect.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/ImageGenerator.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/ProgressLogger.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/OGP.js"></script>
+  
+<script>
+    (() => {
+        const splashRoot = document.getElementById('rosebud-exported-splash');
+        if (!splashRoot) return;
+
+        let isReady = false;
+        let isMinimumVisibleTimeElapsed = false;
+        let isHidden = false;
+
+        const maybeHideSplash = () => {
+            if (isHidden || !isReady || !isMinimumVisibleTimeElapsed) return;
+
+            isHidden = true;
+            splashRoot.classList.add('is-hiding');
+            window.setTimeout(() => splashRoot.remove(), 500);
+        };
+
+        const markReady = () => {
+            isReady = true;
+            maybeHideSplash();
+        };
+
+        window.setTimeout(() => {
+            isMinimumVisibleTimeElapsed = true;
+            maybeHideSplash();
+        }, 1000);
+
+        if (document.readyState === 'complete') {
+            markReady();
+        } else {
+            window.addEventListener('load', markReady, { once: true });
+        }
+
+        
+    })();
+</script></body>
+</html>

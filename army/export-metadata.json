@@ -1,0 +1,16 @@
+{
+  "name": "Army Rush 3D",
+  "revisionLabel": "Army Rush 3D",
+  "description": "",
+  "mode": "Universal",
+  "exportDate": "2026-05-04T06:18:19.918Z",
+  "rosebudBuiltInSplash": {
+    "present": true,
+    "version": 1
+  },
+  "assetCount": 6,
+  "assetTypes": [
+    "glb",
+    "png"
+  ]
+}

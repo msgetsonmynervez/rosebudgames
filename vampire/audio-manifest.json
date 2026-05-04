@@ -1,0 +1,6 @@
+{
+  "gameTitle": "Nightfall Survivors",
+  "music": {},
+  "sfx": [],
+  "note": "Runtime audio is selected by manifest.js so this file stays identical across Visuals First variants."
+}
