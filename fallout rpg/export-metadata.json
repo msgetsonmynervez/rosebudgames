@@ -1,0 +1,16 @@
+{
+  "name": "RPG - Fallout",
+  "revisionLabel": "Standalone Phaser build",
+  "description": "Rosebud runtime dependencies removed for direct browser and Android WebView packaging.",
+  "mode": "Universal",
+  "exportDate": "2026-05-04T04:53:14.106Z",
+  "rosebudBuiltInSplash": {
+    "present": false,
+    "version": null
+  },
+  "assetCount": 48,
+  "assetTypes": [
+    "image",
+    "audio"
+  ]
+}

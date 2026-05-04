@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Puzzle Porch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "phaser": "https://esm.sh/phaser@3.70.0",
+          "tone": "https://esm.sh/tone@14.7.77"
+        }
+      }
+    </script>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; padding: 0;
+        background-color: #2a1a0a;
+        overflow: hidden;
+        width: 100%; height: 100%;
+        touch-action: none;
+      }
+      canvas { display: block; }
+
+      /* Tap confirmation overlay */
+      #tap-confirm {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+      #tap-confirm.active { display: flex; }
+      #tap-confirm-box {
+        background: #fffaf0;
+        border: 4px solid #c8860a;
+        border-radius: 24px;
+        padding: 36px 44px;
+        text-align: center;
+        max-width: 340px;
+        width: 88%;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      }
+      #tap-confirm-msg {
+        font-family: 'Nunito', sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: #3d2200;
+        margin-bottom: 28px;
+        line-height: 1.4;
+      }
+      .confirm-btn {
+        font-family: 'Nunito', sans-serif;
+        font-size: 20px;
+        font-weight: 800;
+        border: none;
+        border-radius: 16px;
+        padding: 16px 32px;
+        cursor: pointer;
+        margin: 6px;
+        min-width: 120px;
+        min-height: 60px;
+        transition: transform 0.1s;
+      }
+      .confirm-btn:active { transform: scale(0.96); }
+      #confirm-yes { background: #c8860a; color: #fff; }
+      #confirm-no  { background: #e8e0d0; color: #3d2200; }
+
+      /* Toast notification */
+      #toast {
+        position: fixed;
+        bottom: 10%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(50,30,5,0.92);
+        color: #ffe5a0;
+        font-family: 'Nunito', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+        padding: 14px 28px;
+        border-radius: 40px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 999;
+        max-width: 80vw;
+        text-align: center;
+      }
+      #toast.show { opacity: 1; }
+
+      /* High contrast mode */
+      body.hc { background: #000; }
+      body.hc #tap-confirm-box { background: #000; border-color: #fff; }
+      body.hc #tap-confirm-msg { color: #fff; }
+      body.hc #confirm-yes { background: #ff0; color: #000; }
+      body.hc #confirm-no  { background: #444; color: #fff; }
+    </style>
+  
+<style>
+    #rosebud-exported-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        opacity: 1;
+        transition: opacity 500ms ease-in-out;
+    }
+
+    #rosebud-exported-splash.is-hiding {
+        opacity: 0;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        text-align: center;
+        color: #fff;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__logo {
+        width: 100px;
+        height: 100px;
+        animation: rosebud-exported-splash-breathe 2.4s ease-in-out infinite;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 16px;
+        line-height: 1.25;
+        letter-spacing: 0.06em;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__text strong {
+        font-weight: 700;
+    }
+
+    #rosebud-exported-splash .rosebud-exported-splash__text span:last-child {
+        opacity: 0.88;
+    }
+
+    @keyframes rosebud-exported-splash-breathe {
+        0%,
+        100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+</style></head>
+  <body>
+<div id="rosebud-exported-splash" aria-live="polite">
+    <div class="rosebud-exported-splash__content">
+        <img
+            class="rosebud-exported-splash__logo"
+            src="__rosebud/rosebud-icon.png"
+            alt="Rosebud Logo"
+            width="100"
+            height="100"
+        />
+        <div class="rosebud-exported-splash__text" aria-label="Rosebud.AI Make Games">
+            <strong>Rosebud.AI</strong>
+            <span>Make Games</span>
+        </div>
+    </div>
+</div>
+    <!-- Tap confirmation overlay -->
+    <div id="tap-confirm" role="dialog" aria-modal="true" aria-label="Confirm action">
+      <div id="tap-confirm-box">
+        <div id="tap-confirm-msg">Are you sure?</div>
+        <div>
+          <button class="confirm-btn" id="confirm-yes">Yes ✓</button>
+          <button class="confirm-btn" id="confirm-no">No ✗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="main.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/ChatManager.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/ImageGenerator.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/ProgressLogger.js"></script>
+    <script src="https://storage.googleapis.com/rosebud_staticfiles/OGP.js"></script>
+  
+<script>
+    (() => {
+        const splashRoot = document.getElementById('rosebud-exported-splash');
+        if (!splashRoot) return;
+
+        let isReady = false;
+        let isMinimumVisibleTimeElapsed = false;
+        let isHidden = false;
+
+        const maybeHideSplash = () => {
+            if (isHidden || !isReady || !isMinimumVisibleTimeElapsed) return;
+
+            isHidden = true;
+            splashRoot.classList.add('is-hiding');
+            window.setTimeout(() => splashRoot.remove(), 500);
+        };
+
+        const markReady = () => {
+            isReady = true;
+            maybeHideSplash();
+        };
+
+        window.setTimeout(() => {
+            isMinimumVisibleTimeElapsed = true;
+            maybeHideSplash();
+        }, 1000);
+
+        if (document.readyState === 'complete') {
+            markReady();
+        } else {
+            window.addEventListener('load', markReady, { once: true });
+        }
+
+        
+    })();
+</script></body>
+</html>
