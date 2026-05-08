@@ -11,7 +11,6 @@ import {
     InitiativeTracker
 } from '../ui/index.js';
 import { DebugPanel } from '../ui/panels/DebugPanel.js';
-import ChatManager, { CHARACTER_PROMPTS } from '../services/AIService.js';
 import { CombatUIManager, DialogueUIManager, SceneUIManager } from '../ui/managers/index.js';
 import { CombatManager } from '../systems/combat/CombatManager.js';
 import { CombatView } from '../systems/combat/CombatView.js';
@@ -46,8 +45,8 @@ export class AdventureScene extends Phaser.Scene {
         // Load combat data (abilities + enemies) for v2 combat
         await this.gameState.loadCombatData();
 
-        // Initialize AI service for combat narration
-        this.chatManager = new ChatManager(CHARACTER_PROMPTS.narrator);
+        // Combat runs fully offline — no AI service needed
+        this.chatManager = null;
 
         // Initialize sound effects system
         // Tone.js requires user interaction before starting audio context
