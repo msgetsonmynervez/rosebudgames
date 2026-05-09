@@ -724,7 +724,54 @@ Rules:
       music: "assets/rambling_154_bpm_loop.mp3",
       openingText: `The MRI corridor is cold and bright and very loud. Alex has learned to bring earbuds and a particular playlist. She's learned what the technicians' expressions mean and how to read a radiologist's report. She's learned to celebrate the clean scans and sit with the ones that aren't. Stability is not the absence of MS. It is a thing you build.`,
       speaker: null,
-      nextScene: "community_matters",
+      nextScene: "infusion_center",
+    },
+
+    infusion_center: {
+      id: "infusion_center",
+      title: "The Infusion Center",
+      type: "narrative",
+      background: "assets/infusion_center.png",
+      music: "assets/rambling_154_bpm_loop.mp3",
+      openingText: `Every few months, the infusion center. The chair is more comfortable than it looks, the nurses know Alex by name now, and there is always bad cable television and surprisingly good crackers. The medication drips in slowly — a disease-modifying therapy that doesn't cure anything but holds the line. Alex brings a book. Sometimes she talks to the person in the next chair. Sometimes they swap tips. Sometimes they just sit together in the particular solidarity of people doing a hard, necessary thing.`,
+      speaker: null,
+      choices: [
+        {
+          id: "talk_to_neighbor",
+          label: "Talk to the person next to you",
+          character: "alex_chen",
+          stat: "spirit",
+          difficulty: "easy",
+          outcomes: {
+            success: {
+              text: "An easy conversation — swapped tips, a shared laugh, a name on a piece of paper. The infusion passes faster. The team grows by one.",
+              setFlag: "infusion_connection",
+              nextScene: "community_matters",
+            },
+            failure: {
+              text: "They're asleep before the drip is half done. That's okay too. Alex reads her book. The medication does its job either way.",
+              nextScene: "community_matters",
+            },
+          },
+        },
+        {
+          id: "rest_quietly",
+          label: "Rest and recharge",
+          character: "alex_chen",
+          stat: "brawn",
+          difficulty: "easy",
+          outcomes: {
+            success: {
+              text: "A rare few hours of sanctioned stillness. Alex finishes her book, eats the crackers, and leaves feeling steadier than when she arrived.",
+              nextScene: "community_matters",
+            },
+            failure: {
+              text: "Too wired to rest, too tired to focus. The crackers help. Sam texts a check-in at exactly the right moment. That helps more.",
+              nextScene: "community_matters",
+            },
+          },
+        },
+      ],
     },
 
     community_matters: {
