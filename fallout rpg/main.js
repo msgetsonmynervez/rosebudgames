@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TitleScene } from './scenes/TitleScene.js';
 import { AdventureScene } from './scenes/AdventureScene.js';
 import { DiceScene } from './scenes/DiceScene.js';
 
@@ -31,7 +32,7 @@ const config = {
     type: Phaser.AUTO,
     parent: 'renderDiv',
     backgroundColor: '#16213e',
-    scene: [AdventureScene, DiceScene],
+    scene: [TitleScene, AdventureScene, DiceScene],
     scale: getScaleConfig()
 };
 
